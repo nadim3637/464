@@ -390,23 +390,28 @@ const App: React.FC = () => {
                               // If no launch date, use first seen logic
                               const key = `nst_update_first_seen_${newSettings.latestVersion}`;
                               // Async handling in useEffect is tricky, using localstorage for update flags might be safer for sync UI
-                              // but let's try to wrap it. Actually, for update popup, we can just use async.
-                              storage.getItem(key).then(firstSeen => {
-                                  let refTime = referenceTime;
-                                  if (!firstSeen) {
-                                      refTime = now;
-                                      storage.setItem(key, now.toString());
-                                  } else {
-                                      refTime = parseInt(firstSeen as string);
-                                  }
-                                  checkUpdatePopup(newSettings, refTime, now);
-                              });
-                          } else {
-                              checkUpdatePopup(newSettings, referenceTime, now);
-                          }
-                      }
-                  }
-              });
+                              // but let's try to wrap it. Actually, for update popup, we can just use 
+                            useEffect(() => {
+    if (!referenceTime) {
+        const key = `nst_update_first_seen_${newSettings.latestVersion}`;
+        storage.getItem(key).then(firstSeen => {
+            let refTime = referenceTime;
+            if (!firstSeen) {
+                refTime = now;
+                storage.setItem(key, now.toString());
+            } else {
+                refTime = parseInt(firstSeen as string);
+            }
+            checkUpdatePopup(newSettings, refTime, now);
+        });
+    } else {
+        checkUpdatePopup(newSettings, referenceTime, now);
+    }
+
+    return () => {
+        if (unsubscribe) unsubscribe();
+    };
+}, []);
           }
       });
       return () => {
